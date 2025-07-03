@@ -56,6 +56,9 @@ namespace SDRSharp.Plugin.SignalRecorder
 
             PlotBtn.MouseClick += new MouseEventHandler(PlotBtnClicked);
             PlotReportLabel.Text = "";
+
+            WavRadioButton.MouseClick += new MouseEventHandler(WavRadioButtonClicked);
+            CsvRadioButton.MouseClick += new MouseEventHandler(CsvRadioButtonClicked);
             #endregion
 
             #region tooltips
@@ -68,6 +71,8 @@ namespace SDRSharp.Plugin.SignalRecorder
             toolTip1.SetToolTip(RecordingTimeLabel, "How long the recording lasts");
             toolTip1.SetToolTip(DataLabel, "Data to be saved");
             toolTip1.SetToolTip(StartRecordingCheckBox, "Recording enable (the recording starts when the signal exceeds the threshold");
+            toolTip1.SetToolTip(WavRadioButton, "Save as WAV file with I/Q data as stereo 32-bit float");
+            toolTip1.SetToolTip(CsvRadioButton, "Save as CSV file with configurable data columns");
             #endregion
         }
 
@@ -182,6 +187,46 @@ namespace SDRSharp.Plugin.SignalRecorder
         private void PlotBtnClicked(object sender, MouseEventArgs e)
         {
             PlotReportLabel.Text = _processor.PlotValuesFromCsv() ? "" : "No valid file in " + _processor.SelectedFolder;
+        }
+        #endregion
+
+        #region output format
+        private void WavRadioButtonClicked(object sender, MouseEventArgs e)
+        {
+            _processor.WavOutputEnabled = WavRadioButton.Checked;
+            _processor.CsvOutputEnabled = !WavRadioButton.Checked;
+            
+            // Hide CSV-specific options when WAV is selected
+            ICheckBox.Visible = !WavRadioButton.Checked;
+            QCheckBox.Visible = !WavRadioButton.Checked;
+            ModCheckBox.Visible = !WavRadioButton.Checked;
+            ArgCheckBox.Visible = !WavRadioButton.Checked;
+            
+            if (WavRadioButton.Checked)
+            {
+                DataLabel.Text = "WAV stores I/Q as stereo float";
+            }
+            else
+            {
+                DataLabel.Text = "Data:";
+            }
+        }
+
+        private void CsvRadioButtonClicked(object sender, MouseEventArgs e)
+        {
+            _processor.WavOutputEnabled = !CsvRadioButton.Checked;
+            _processor.CsvOutputEnabled = CsvRadioButton.Checked;
+            
+            // Show CSV-specific options when CSV is selected
+            ICheckBox.Visible = CsvRadioButton.Checked;
+            QCheckBox.Visible = CsvRadioButton.Checked;
+            ModCheckBox.Visible = CsvRadioButton.Checked;
+            ArgCheckBox.Visible = CsvRadioButton.Checked;
+            
+            if (CsvRadioButton.Checked)
+            {
+                DataLabel.Text = "Data:";
+            }
         }
         #endregion
 

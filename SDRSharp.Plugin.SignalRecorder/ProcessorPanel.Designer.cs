@@ -57,6 +57,9 @@ namespace SDRSharp.Plugin.SignalRecorder
             this.TimePerFileLabel = new System.Windows.Forms.Label();
             this.TimePerFileValue = new System.Windows.Forms.TextBox();
             this.TimePerFileErrorLabel = new System.Windows.Forms.Label();
+            this.OutputFormatLabel = new System.Windows.Forms.Label();
+            this.WavRadioButton = new System.Windows.Forms.RadioButton();
+            this.CsvRadioButton = new System.Windows.Forms.RadioButton();
             ((System.ComponentModel.ISupportInitialize)(this.ThresholdValue)).BeginInit();
             this.SuspendLayout();
             // 
@@ -151,7 +154,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             // StartRecordingCheckBox
             // 
             this.StartRecordingCheckBox.AutoSize = true;
-            this.StartRecordingCheckBox.Location = new System.Drawing.Point(0, 394);
+            this.StartRecordingCheckBox.Location = new System.Drawing.Point(0, 454);
             this.StartRecordingCheckBox.Name = "StartRecordingCheckBox";
             this.StartRecordingCheckBox.Size = new System.Drawing.Size(148, 24);
             this.StartRecordingCheckBox.TabIndex = 10;
@@ -205,7 +208,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label3.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.label3.Location = new System.Drawing.Point(0, 384);
+            this.label3.Location = new System.Drawing.Point(0, 444);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(255, 2);
             this.label3.TabIndex = 15;
@@ -214,7 +217,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             // DataLabel
             // 
             this.DataLabel.AutoSize = true;
-            this.DataLabel.Location = new System.Drawing.Point(0, 280);
+            this.DataLabel.Location = new System.Drawing.Point(0, 340);
             this.DataLabel.Name = "DataLabel";
             this.DataLabel.Size = new System.Drawing.Size(44, 20);
             this.DataLabel.TabIndex = 16;
@@ -224,7 +227,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             // ICheckBox
             // 
             this.ICheckBox.AutoSize = true;
-            this.ICheckBox.Location = new System.Drawing.Point(0, 313);
+            this.ICheckBox.Location = new System.Drawing.Point(0, 373);
             this.ICheckBox.Name = "ICheckBox";
             this.ICheckBox.Size = new System.Drawing.Size(35, 24);
             this.ICheckBox.TabIndex = 17;
@@ -235,7 +238,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             // QCheckBox
             // 
             this.QCheckBox.AutoSize = true;
-            this.QCheckBox.Location = new System.Drawing.Point(122, 313);
+            this.QCheckBox.Location = new System.Drawing.Point(122, 373);
             this.QCheckBox.Name = "QCheckBox";
             this.QCheckBox.Size = new System.Drawing.Size(42, 24);
             this.QCheckBox.TabIndex = 18;
@@ -246,7 +249,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             // ModCheckBox
             // 
             this.ModCheckBox.AutoSize = true;
-            this.ModCheckBox.Location = new System.Drawing.Point(0, 344);
+            this.ModCheckBox.Location = new System.Drawing.Point(0, 404);
             this.ModCheckBox.Name = "ModCheckBox";
             this.ModCheckBox.Size = new System.Drawing.Size(88, 24);
             this.ModCheckBox.TabIndex = 19;
@@ -257,7 +260,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             // ArgCheckBox
             // 
             this.ArgCheckBox.AutoSize = true;
-            this.ArgCheckBox.Location = new System.Drawing.Point(122, 344);
+            this.ArgCheckBox.Location = new System.Drawing.Point(122, 404);
             this.ArgCheckBox.Name = "ArgCheckBox";
             this.ArgCheckBox.Size = new System.Drawing.Size(97, 24);
             this.ArgCheckBox.TabIndex = 20;
@@ -268,7 +271,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             // RecordingStatusLabel
             // 
             this.RecordingStatusLabel.AutoSize = true;
-            this.RecordingStatusLabel.Location = new System.Drawing.Point(161, 395);
+            this.RecordingStatusLabel.Location = new System.Drawing.Point(161, 455);
             this.RecordingStatusLabel.Name = "RecordingStatusLabel";
             this.RecordingStatusLabel.Size = new System.Drawing.Size(49, 20);
             this.RecordingStatusLabel.TabIndex = 21;
@@ -280,7 +283,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label4.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.label4.Location = new System.Drawing.Point(0, 430);
+            this.label4.Location = new System.Drawing.Point(0, 490);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(255, 2);
             this.label4.TabIndex = 22;
@@ -288,7 +291,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             // 
             // PlotBtn
             // 
-            this.PlotBtn.Location = new System.Drawing.Point(0, 444);
+            this.PlotBtn.Location = new System.Drawing.Point(0, 504);
             this.PlotBtn.Name = "PlotBtn";
             this.PlotBtn.Size = new System.Drawing.Size(252, 29);
             this.PlotBtn.TabIndex = 23;
@@ -299,7 +302,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             // PlotReportLabel
             // 
             this.PlotReportLabel.AutoSize = true;
-            this.PlotReportLabel.Location = new System.Drawing.Point(3, 485);
+            this.PlotReportLabel.Location = new System.Drawing.Point(3, 545);
             this.PlotReportLabel.Name = "PlotReportLabel";
             this.PlotReportLabel.Size = new System.Drawing.Size(80, 20);
             this.PlotReportLabel.TabIndex = 24;
@@ -333,10 +336,44 @@ namespace SDRSharp.Plugin.SignalRecorder
             this.TimePerFileErrorLabel.TabIndex = 9;
             this.TimePerFileErrorLabel.Text = "Error";
             // 
+            // OutputFormatLabel
+            // 
+            this.OutputFormatLabel.AutoSize = true;
+            this.OutputFormatLabel.Location = new System.Drawing.Point(50, 280);
+            this.OutputFormatLabel.Name = "OutputFormatLabel";
+            this.OutputFormatLabel.Size = new System.Drawing.Size(106, 20);
+            this.OutputFormatLabel.TabIndex = 25;
+            this.OutputFormatLabel.Text = "Output Format:";
+            // 
+            // WavRadioButton
+            // 
+            this.WavRadioButton.AutoSize = true;
+            this.WavRadioButton.Location = new System.Drawing.Point(164, 280);
+            this.WavRadioButton.Name = "WavRadioButton";
+            this.WavRadioButton.Size = new System.Drawing.Size(62, 24);
+            this.WavRadioButton.TabIndex = 26;
+            this.WavRadioButton.Text = "WAV";
+            this.WavRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // CsvRadioButton
+            // 
+            this.CsvRadioButton.AutoSize = true;
+            this.CsvRadioButton.Checked = true;
+            this.CsvRadioButton.Location = new System.Drawing.Point(50, 308);
+            this.CsvRadioButton.Name = "CsvRadioButton";
+            this.CsvRadioButton.Size = new System.Drawing.Size(54, 24);
+            this.CsvRadioButton.TabIndex = 27;
+            this.CsvRadioButton.TabStop = true;
+            this.CsvRadioButton.Text = "CSV";
+            this.CsvRadioButton.UseVisualStyleBackColor = true;
+            // 
             // ProcessorPanel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.CsvRadioButton);
+            this.Controls.Add(this.WavRadioButton);
+            this.Controls.Add(this.OutputFormatLabel);
             this.Controls.Add(this.PlotReportLabel);
             this.Controls.Add(this.PlotBtn);
             this.Controls.Add(this.label4);
@@ -365,7 +402,7 @@ namespace SDRSharp.Plugin.SignalRecorder
             this.Controls.Add(this.ThresholdValue);
             this.Controls.Add(this.ThresholdLabel);
             this.Name = "ProcessorPanel";
-            this.Size = new System.Drawing.Size(255, 529);
+            this.Size = new System.Drawing.Size(255, 580);
             ((System.ComponentModel.ISupportInitialize)(this.ThresholdValue)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -402,5 +439,8 @@ namespace SDRSharp.Plugin.SignalRecorder
         private System.Windows.Forms.Label TimePerFileLabel;
         private System.Windows.Forms.TextBox TimePerFileValue;
         private System.Windows.Forms.Label TimePerFileErrorLabel;
+        private System.Windows.Forms.Label OutputFormatLabel;
+        private System.Windows.Forms.RadioButton WavRadioButton;
+        private System.Windows.Forms.RadioButton CsvRadioButton;
     }
 }

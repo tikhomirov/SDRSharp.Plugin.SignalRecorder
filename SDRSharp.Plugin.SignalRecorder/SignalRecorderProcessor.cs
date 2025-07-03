@@ -29,6 +29,10 @@ namespace SDRSharp.Plugin.SignalRecorder
         private bool _recording;
         private string _selectedFolder;
         private StringBuilder _line;
+        private FileStream _wavFileStream;
+        private BinaryWriter _wavWriter;
+        private long _wavDataSizePosition;
+        private long _wavSampleCount;
 
         public double SampleRate { get; set; }
 
@@ -65,7 +69,15 @@ namespace SDRSharp.Plugin.SignalRecorder
             get => _recordingEnabled;
             set
             {
-                if (!value) _recording = false;
+                if (!value) 
+                {
+                    _recording = false;
+                    // Close WAV file if it's open
+                    if (WavOutputEnabled)
+                    {
+                        CloseWavFile();
+                    }
+                }
                 // if enabled create a new file name
                 else UpdateFileName();
 
@@ -100,6 +112,10 @@ namespace SDRSharp.Plugin.SignalRecorder
         public bool ModSaveEnabled { get; set; }
 
         public bool ArgSaveEnabled { get; set; }
+
+        public bool WavOutputEnabled { get; set; }
+
+        public bool CsvOutputEnabled { get; set; } = true;
 
         public string SelectedFolder
         {
@@ -145,62 +161,119 @@ namespace SDRSharp.Plugin.SignalRecorder
         {
             if (RecordingEnabled)
             {
-                //using (StreamWriter file = new StreamWriter(FileName, append: true))
-                const int BufferSize = 65536;  // 64 Kilobytes
-                StreamWriter file = new StreamWriter(FileName, append: true, Encoding.UTF8, BufferSize);
-
-                for (int i = 0; i < length; i++)
+                if (WavOutputEnabled)
                 {
-                    float modulus = buffer[i].Modulus();
-                    float db = 20 * (float)Math.Log10(modulus);
+                    ProcessWavOutput(buffer, length);
+                }
+                else
+                {
+                    ProcessCsvOutput(buffer, length);
+                }
+            }
+        }
 
-                    if (db > ThresholdDb && RecordingEnabled && !Recording)
+        private unsafe void ProcessCsvOutput(Complex* buffer, int length)
+        {
+            const int BufferSize = 65536;  // 64 Kilobytes
+            StreamWriter file = new StreamWriter(FileName, append: true, Encoding.UTF8, BufferSize);
+
+            for (int i = 0; i < length; i++)
+            {
+                float modulus = buffer[i].Modulus();
+                float db = 20 * (float)Math.Log10(modulus);
+
+                if (db > ThresholdDb && RecordingEnabled && !Recording)
+                {
+                    Recording = true;
+
+                    MakeFileHeader();
+                    file.Write(_line);
+                    _line.Clear();
+                }
+
+                if (Recording)
+                {
+                    _line.Append(SampleCount++ / SampleRate * 1000);
+                    if (ISaveEnabled) _line.Append('\t').Append(buffer[i].Imag);
+                    if (QSaveEnabled) _line.Append('\t').Append(buffer[i].Real);
+                    if (ModSaveEnabled) _line.Append('\t').Append(modulus);
+                    if (ArgSaveEnabled) _line.Append('\t').Append(buffer[i].Argument());
+                    _line.Append('\n');
+                    file.Write(_line);
+                    _line.Clear();
+
+                    // if neither full signal recording is selected
+                    // nor a signal is detected, countdown the samples
+                    if (!AutoRecord || db < ThresholdDb) _samplesToBeSaved--;
+                    else ResetSamplesToBeSaved();
+
+                    if (_samplesToBeSaved <= 0)
                     {
-                        Recording = true;
+                        Recording = false;
+                        RecordingEnabled = false;
+                        SampleCount = 0;
+                    }
 
+                    if(_samplesPerFile > 0) _samplesPerFile--;
+                    if(_samplesPerFile == 0 && Recording)
+                    {
+                        file.Close();
+                        UpdateFileName();
+                        ResetSamplesPerFile();
+                        file = new StreamWriter(FileName, append: true, Encoding.UTF8, BufferSize);
                         MakeFileHeader();
                         file.Write(_line);
                         _line.Clear();
                     }
+                }
+            }
 
-                    if (Recording)
-                    {
-                        _line.Append(SampleCount++ / SampleRate * 1000);
-                        if (ISaveEnabled) _line.Append('\t').Append(buffer[i].Imag);
-                        if (QSaveEnabled) _line.Append('\t').Append(buffer[i].Real);
-                        if (ModSaveEnabled) _line.Append('\t').Append(modulus);
-                        if (ArgSaveEnabled) _line.Append('\t').Append(buffer[i].Argument());
-                        _line.Append('\n');
-                        file.Write(_line);
-                        _line.Clear();
+            file.Close();
+        }
 
-                        // if neither full signal recording is selected
-                        // nor a signal is detected, countdown the samples
-                        if (!AutoRecord || db < ThresholdDb) _samplesToBeSaved--;
-                        else ResetSamplesToBeSaved();
+        private unsafe void ProcessWavOutput(Complex* buffer, int length)
+        {
+            for (int i = 0; i < length; i++)
+            {
+                float modulus = buffer[i].Modulus();
+                float db = 20 * (float)Math.Log10(modulus);
 
-                        if (_samplesToBeSaved <= 0)
-                        {
-                            Recording = false;
-                            RecordingEnabled = false;
-                            SampleCount = 0;
-                        }
-
-                        if(_samplesPerFile > 0) _samplesPerFile--;
-                        if(_samplesPerFile == 0 && Recording)
-                        {
-                            file.Close();
-                            UpdateFileName();
-                            ResetSamplesPerFile();
-                            file = new StreamWriter(FileName, append: true, Encoding.UTF8, BufferSize);
-                            MakeFileHeader();
-                            file.Write(_line);
-                            _line.Clear();
-                        }
-                    }
+                if (db > ThresholdDb && RecordingEnabled && !Recording)
+                {
+                    Recording = true;
+                    StartWavFile();
                 }
 
-                file.Close();
+                if (Recording)
+                {
+                    // Write IQ data as stereo 32-bit float (I=left, Q=right)
+                    _wavWriter.Write(buffer[i].Real);  // I component (left channel)
+                    _wavWriter.Write(buffer[i].Imag);  // Q component (right channel)
+                    _wavSampleCount++;
+                    SampleCount++;
+
+                    // if neither full signal recording is selected
+                    // nor a signal is detected, countdown the samples
+                    if (!AutoRecord || db < ThresholdDb) _samplesToBeSaved--;
+                    else ResetSamplesToBeSaved();
+
+                    if (_samplesToBeSaved <= 0)
+                    {
+                        Recording = false;
+                        RecordingEnabled = false;
+                        SampleCount = 0;
+                        CloseWavFile();
+                    }
+
+                    if(_samplesPerFile > 0) _samplesPerFile--;
+                    if(_samplesPerFile == 0 && Recording)
+                    {
+                        CloseWavFile();
+                        UpdateFileName();
+                        ResetSamplesPerFile();
+                        StartWavFile();
+                    }
+                }
             }
         }
 
@@ -216,7 +289,8 @@ namespace SDRSharp.Plugin.SignalRecorder
 
         private void UpdateFileName()
         {
-            FileName = Path.Combine(SelectedFolder, "SigRec_" + DateTime.Now.ToString("yyyyMMddHHmmssff") + ".csv");
+            string extension = WavOutputEnabled ? ".wav" : ".csv";
+            FileName = Path.Combine(SelectedFolder, "SigRec_" + DateTime.Now.ToString("yyyyMMddHHmmssff") + extension);
         }
 
         private void MakeFileHeader()
@@ -227,6 +301,59 @@ namespace SDRSharp.Plugin.SignalRecorder
             if (ModSaveEnabled) _line.Append('\t').Append("Modulus");
             if (ArgSaveEnabled) _line.Append('\t').Append("Argument");
             _line.Append('\n');
+        }
+
+        private void StartWavFile()
+        {
+            _wavFileStream = new FileStream(FileName, FileMode.Create, FileAccess.Write);
+            _wavWriter = new BinaryWriter(_wavFileStream);
+            _wavSampleCount = 0;
+
+            // Write WAV header
+            WriteWavHeader();
+        }
+
+        private void WriteWavHeader()
+        {
+            // RIFF header
+            _wavWriter.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
+            _wavWriter.Write((uint)0); // File size placeholder (will be updated later)
+            _wavWriter.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
+
+            // fmt chunk
+            _wavWriter.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
+            _wavWriter.Write((uint)16); // fmt chunk size
+            _wavWriter.Write((ushort)3); // Audio format (3 = IEEE 754 float)
+            _wavWriter.Write((ushort)2); // Number of channels (2 for stereo IQ)
+            _wavWriter.Write((uint)SampleRate); // Sample rate
+            _wavWriter.Write((uint)(SampleRate * 2 * 4)); // Byte rate (sample rate * channels * bytes per sample)
+            _wavWriter.Write((ushort)(2 * 4)); // Block align (channels * bytes per sample)
+            _wavWriter.Write((ushort)32); // Bits per sample (32-bit float)
+
+            // data chunk
+            _wavWriter.Write(System.Text.Encoding.ASCII.GetBytes("data"));
+            _wavDataSizePosition = _wavWriter.BaseStream.Position;
+            _wavWriter.Write((uint)0); // Data size placeholder (will be updated later)
+        }
+
+        private void CloseWavFile()
+        {
+            if (_wavWriter != null)
+            {
+                // Update file size in RIFF header
+                long currentPosition = _wavWriter.BaseStream.Position;
+                _wavWriter.BaseStream.Seek(4, SeekOrigin.Begin);
+                _wavWriter.Write((uint)(currentPosition - 8));
+
+                // Update data size in data chunk
+                _wavWriter.BaseStream.Seek(_wavDataSizePosition, SeekOrigin.Begin);
+                _wavWriter.Write((uint)(_wavSampleCount * 2 * 4)); // samples * channels * bytes per sample
+
+                _wavWriter.Close();
+                _wavFileStream.Close();
+                _wavWriter = null;
+                _wavFileStream = null;
+            }
         }
 
         public bool PlotValuesFromCsv()
